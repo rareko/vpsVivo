@@ -710,7 +710,7 @@ function source_config() {
 
 			if [ $count -gt 1 ]; then
 				echo "creating swap for binaries !!!!!!" >>  ${SCRIPT_LOGFILE}
-				swaphack
+				#swaphack
 			fi
 			bdb			
 			build_mn_with_binary
@@ -719,12 +719,12 @@ function source_config() {
 		
 		if [ "$greatswap" -eq 1 ]; then
 			echo "Will build swap for binary." 	 
-			swaphack
+			#swaphack
 		fi	
 				
 		if [ "$binary" -eq 0 ]; then
 			echo "Will build source." 	 
-			swaphack
+			#swaphack
 			bdb
 			build_mn_from_source
 		fi	
