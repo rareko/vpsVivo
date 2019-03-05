@@ -108,11 +108,11 @@ function install_packages() {
 function swaphack() {
 #check if swap is available
 if [ $(free | awk '/^Swap:/ {exit !$2}') ] || [ ! -f "/var/mnode_swap.img" ];then
-	echo "* No proper swap, creating it"
+  echo "* No proper swap, creating it"
 	# needed because ant servers are ants
 	rm -f /var/mnode_swap.img
 	#dd if=/dev/zero of=/var/mnode_swap.img bs=2048k count=${MNODE_SWAPSIZE} &>> ${SCRIPT_LOGFILE}
-  sudo fallocate -l 5G /var/mnode_swap.img
+  fallocate -l 5G /var/mnode_swap.img
 	chmod 0600 /var/mnode_swap.img
 	mkswap /var/mnode_swap.img &>> ${SCRIPT_LOGFILE}
 	swapon /var/mnode_swap.img &>> ${SCRIPT_LOGFILE}
