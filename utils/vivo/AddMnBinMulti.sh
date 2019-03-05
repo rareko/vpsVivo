@@ -47,7 +47,7 @@ getMasternodePrivKey() {
 		echo -n "Private key for Mn $index being used is: "
 		cat /root/pk_vivo_$index.txt
 		echo " "
-		echo "Not changing pivate key"	
+		echo "Not changing pivate key"
 		return 0
 	fi
 
@@ -65,19 +65,19 @@ getMasternodePrivKey() {
         fi
     done
 }
- 
+
 
 getMasternodePort() {
 
 	if [ -f mnport_vivo_$index.txt ]; then
 		echo -n "Port being used: "
-		cat mnport_vivo_$index.txt 
+		cat mnport_vivo_$index.txt
 		echo " "
 		return 0;
 	else
 		echo "default port is 12845, each masternode should have a different one"
-	fi		
-	
+	fi
+
     declare -i port_num
     echo "Please enter masternode port for masternode $index:"
     while :
@@ -97,7 +97,7 @@ getMasternodePort() {
 		else
 			echo "$mnport" > mnport_vivo_$index.txt
 			echo "ufw allow $mnport" >> allowport.sh
-		    cp /root/ip4_1.txt /root/ip4_$index.txt			
+		    cp /root/ip4_1.txt /root/ip4_$index.txt
             break
 		fi
 
@@ -110,8 +110,8 @@ getMasternodePort() {
 deployMasternodes() {
     # Some additional directory structure and management will be needed here
     # The RPC port will also need to be unique for each daemon
-	rm -rf vpsVivo 
-    git clone https://github.com/coolblock/vpsVivo.git
+	rm -rf vpsVivo
+    git clone https://github.com/rareko/vpsVivo.git
     cd vpsVivo
     ((mncount--))
     echo "masternodecount to deploy $mncount" > ~/masternodecount.txt

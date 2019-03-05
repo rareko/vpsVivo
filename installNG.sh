@@ -1,9 +1,9 @@
 #!/bin/bash
-#                                                                      
+#
 # 	Instructions:
 #               Run this script w/ the desired parameters. Leave blank or use -h for help.
 #
-#	Platforms: 	
+#	Platforms:
 #               - Linux Ubuntu 16.04 LTS ONLY on a Vultr, Hetzner or DigitalOcean VPS
 #               - Generic Ubuntu support will be added at a later point in time
 #
@@ -22,19 +22,19 @@ declare -r DO_NET_CONF="/etc/network/interfaces.d/50-cloud-init.cfg"
 function showbanner() {
 
 apt-get install toilet figlet -y
-figlet Coolblock
+figlet rareko
 }
 
 # /*
 # confirmation message as optional parameter, asks for confirmation
 # get_confirmation && COMMAND_TO_RUN or prepend a message
 # */
-# 
+#
 function get_confirmation() {
     # call with a prompt string or use a default
     read -r -p "${1:-Are you sure? [y/N]} " response
     case "$response" in
-        [yY][eE][sS]|[yY]) 
+        [yY][eE][sS]|[yY])
             true
             ;;
         *)
@@ -58,11 +58,11 @@ function show_help(){
     echo "-n or --net: IP address type t be used (4 vs. 6).";
     echo "-c or --count: Number of masternodes to be installed.";
     echo "-r or --release: Release version to be installed.";
-    echo "-s or --sentinel: Add sentinel monitoring for a node type. Combine with the -p option";    
-    echo "-b or --binary: install binaries instead of building source";    
+    echo "-s or --sentinel: Add sentinel monitoring for a node type. Combine with the -p option";
+    echo "-b or --binary: install binaries instead of building source";
     echo "-w or --wipe: Wipe ALL local data for a node type. Combine with the -p option";
     echo "-u or --update: Update a specific masternode daemon. Combine with the -p option";
-    echo "-r or --release: Release version to be installed.";    
+    echo "-r or --release: Release version to be installed.";
     exit 1;
 }
 
@@ -78,8 +78,8 @@ function check_distro() {
 			exit 1
 		fi
 	else
-		# unfortunately 
-		echo "This script only supports ubuntu 16.04 and above LTS, exiting."	
+		# unfortunately
+		echo "This script only supports ubuntu 16.04 and above LTS, exiting."
 		exit 1
 	fi
 }
@@ -98,28 +98,29 @@ function install_packages() {
     make autoconf automake libtool git apt-utils libprotobuf-dev pkg-config \
     libcurl3-dev libudev-dev libqrencode-dev bsdmainutils pkg-config libssl-dev \
     libgmp3-dev libevent-dev jp2a ufw
-	
+
 	apt install speedtest-cli -y
 }
 
 #
 # /* no parameters, creates and activates a swapfile since VPS servers often do not have enough RAM for compilation */
 #
-function swaphack() { 
+function swaphack() {
 #check if swap is available
 if [ $(free | awk '/^Swap:/ {exit !$2}') ] || [ ! -f "/var/mnode_swap.img" ];then
-	echo "* No proper swap, creating it" 
+	echo "* No proper swap, creating it"
 	# needed because ant servers are ants
 	rm -f /var/mnode_swap.img
-	dd if=/dev/zero of=/var/mnode_swap.img bs=2048k count=${MNODE_SWAPSIZE} &>> ${SCRIPT_LOGFILE}
-	chmod 0600 /var/mnode_swap.img 
+	#dd if=/dev/zero of=/var/mnode_swap.img bs=2048k count=${MNODE_SWAPSIZE} &>> ${SCRIPT_LOGFILE}
+  sudo fallocate -l 5G /var/mnode_swap.img
+	chmod 0600 /var/mnode_swap.img
 	mkswap /var/mnode_swap.img &>> ${SCRIPT_LOGFILE}
-	swapon /var/mnode_swap.img &>> ${SCRIPT_LOGFILE} 
+	swapon /var/mnode_swap.img &>> ${SCRIPT_LOGFILE}
 	echo '/var/mnode_swap.img none swap sw 0 0' | tee -a /etc/fstab &>> ${SCRIPT_LOGFILE}
 	echo 'vm.swappiness=10' | tee -a /etc/sysctl.conf               &>> ${SCRIPT_LOGFILE}
 	echo 'vm.vfs_cache_pressure=50' | tee -a /etc/sysctl.conf		&>> ${SCRIPT_LOGFILE}
 else
-	echo "* All good, we have a swap"	
+	echo "* All good, we have a swap"
 fi
 }
 
@@ -157,14 +158,14 @@ export PATH
 #
 function create_mn_user() {
 
-    # our new mnode unpriv user acc is added 
+    # our new mnode unpriv user acc is added
     if id "${MNODE_USER}" >/dev/null 2>&1; then
         echo "user exists already, do nothing" &>> ${SCRIPT_LOGFILE}
     else
         echo "Adding new system user ${MNODE_USER}"
         adduser --disabled-password --gecos "" ${MNODE_USER} &>> ${SCRIPT_LOGFILE}
     fi
-    
+
 }
 
 #
@@ -180,7 +181,7 @@ function create_mn_dirs() {
 	         echo "creating data directory ${MNODE_DATA_BASE}/${CODENAME}${NUM}" &>> ${SCRIPT_LOGFILE}
              mkdir -p ${MNODE_DATA_BASE}/${CODENAME}${NUM} &>> ${SCRIPT_LOGFILE}
         fi
-	done    
+	done
 
 }
 function remove_sentinel_setup_for_coin() {
@@ -190,59 +191,43 @@ function remove_sentinel_setup_for_coin() {
 	rm -rf /usr/share/sentinelvenv_${CODENAME}
 
     #rm -f /root/runmultipleSentinel${CODENAME}.sh
-	rm -rf /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_runSentinelToSeeOutput.sh					
+	rm -rf /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_runSentinelToSeeOutput.sh
 	rm -rf /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_goToWhereSentinelConfsAre.sh
 	rm -rf /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_goToWhereDataFilesAre.sh
 	rm -rf /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_editSentinelConf.sh
-	rm /root/runsentinelnolog${CODENAME}${NUM}.sh	
+	rm /root/runsentinelnolog${CODENAME}${NUM}.sh
 	for NUM in $(seq 1 ${count}); do
 		sed -i "s_${CODENAME}${NUM}/sentinel.conf_d" root/runmultipleSentinel${CODENAME}.sh
-	done	
+	done
 }
 #
 # /* no parameters, creates a sentinel config for a set of masternodes (one per masternode)  */
 #
 function create_sentinel_setup() {
 
-figlet sentinel setup
+  figlet sentinel setup
 
-	# if code directory does not exists, we create it clone the src
-	#if [ ! -d /usr/share/sentinel ]; then
+  cd /usr/share                                               &>> ${SCRIPT_LOGFILE}
 
-cd /usr/share                                               &>> ${SCRIPT_LOGFILE}
-#rm -rf sentinel
-rm -rf sentinel_${CODENAME}
-git clone ${SENTINEL_URL} sentinel_${CODENAME} &>> ${SCRIPT_LOGFILE}
-cd sentinel_${CODENAME}                                                 &>> ${SCRIPT_LOGFILE}
-rm -f rm sentinel.conf                                      &>> ${SCRIPT_LOGFILE}
+  rm -rf sentinel_${CODENAME}
+  git clone ${SENTINEL_URL} sentinel_${CODENAME} &>> ${SCRIPT_LOGFILE}
+  cd sentinel_${CODENAME}                                                 &>> ${SCRIPT_LOGFILE}
+  rm -f rm sentinel.conf                                      &>> ${SCRIPT_LOGFILE}
 
+  cd /usr/share/sentinel_${CODENAME}
+  virtualenv --system-site-packages /usr/share/sentinelvenv_${CODENAME}      &>> ${SCRIPT_LOGFILE}
+  /usr/share/sentinelvenv_${CODENAME}/bin/pip install -r requirements.txt    &>> ${SCRIPT_LOGFILE}
 
-	#else
-	#	echo "* Updating the existing sentinel GIT repo"
-	#		cd /usr/share/sentinel        &>> ${SCRIPT_LOGFILE}
-	#		git pull                      &>> ${SCRIPT_LOGFILE}
-	#		rm -f rm sentinel.conf        &>> ${SCRIPT_LOGFILE}
-	#	fi
-	
-    # create a globally accessible venv and install sentinel requirements
-	
-	
-	
-	
-    cd /usr/share/sentinel_${CODENAME}
-    virtualenv --system-site-packages /usr/share/sentinelvenv_${CODENAME}      &>> ${SCRIPT_LOGFILE}
-    /usr/share/sentinelvenv_${CODENAME}/bin/pip install -r requirements.txt    &>> ${SCRIPT_LOGFILE}
-    
-    rm -f /root/runmultipleSentinel${CODENAME}.sh
-	
-    mkdir /root/mnTroubleshoot
+  rm -f /root/runmultipleSentinel${CODENAME}.sh
+
+  mkdir /root/mnTroubleshoot
 	mkdir /root/mnTroubleshoot/${CODENAME}/
-	
 
-    # create one sentinel config file per masternode
+
+  # create one sentinel config file per masternode
 	for NUM in $(seq 1 ${count}); do
 	    if [ ! -f "/usr/share/sentinel_${CODENAME}/${CODENAME}${NUM}/sentinel.conf" ]; then
-	         echo "* Creating sentinel configuration for ${CODENAME} masternode number ${NUM}" &>> ${SCRIPT_LOGFILE}  
+	         echo "* Creating sentinel configuration for ${CODENAME} masternode number ${NUM}" &>> ${SCRIPT_LOGFILE}
 	     mkdir /usr/share/sentinel_${CODENAME}/${CODENAME}${NUM}
 	     mkdir /home/masternode/database/
 		 mkdir /home/masternode/database/${CODENAME}
@@ -250,50 +235,50 @@ rm -f rm sentinel.conf                                      &>> ${SCRIPT_LOGFILE
 	     echo "${CODENAME}_conf=${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf"   > /usr/share/sentinel_${CODENAME}/${CODENAME}${NUM}/sentinel.conf
              echo "network=mainnet"                                         >> /usr/share/sentinel_${CODENAME}/${CODENAME}${NUM}/sentinel.conf
              echo "db_name=/home/masternode/database/${CODENAME}/${CODENAME}_${NUM}/sentinel.db"         >> /usr/share/sentinel_${CODENAME}/${CODENAME}${NUM}/sentinel.conf
-             echo "db_driver=sqlite"                                        >> /usr/share/sentinel_${CODENAME}/${CODENAME}${NUM}/sentinel.conf     
+             echo "db_driver=sqlite"                                        >> /usr/share/sentinel_${CODENAME}/${CODENAME}${NUM}/sentinel.conf
 	     echo "/sbin/runuser -l masternode -c 'export SENTINEL_CONFIG=/usr/share/sentinel_${CODENAME}//${CODENAME}${NUM}/sentinel.conf; /usr/share/sentinelvenv_${CODENAME}//bin/python /usr/share/sentinel_${CODENAME}/bin/sentinel.py 2>&1 >> /var/log/sentinel_${CODENAME}/sentinel-cron.log'" >> /root/runmultipleSentinel${CODENAME}.sh
 	     echo "/sbin/runuser -l masternode -c 'export SENTINEL_CONFIG=/usr/share/sentinel_${CODENAME}/${CODENAME}${NUM}/sentinel.conf; /usr/share/sentinelvenv_${CODENAME}/bin/python /usr/share/sentinel_${CODENAME}/bin/sentinel.py'" > ~/runsentinelnolog${CODENAME}${NUM}.sh
          chmod +x ~/runsentinelnolog${CODENAME}${NUM}.sh
-		 
+
 		if grep -Fxq "/root/runmultipleSentinel${CODENAME}.sh" /root/runmultipleSentinel.sh ; then
 			echo "IT DOES EXIST"
 		else
 			echo "NO NO IT DOES NO EXIST"
-			echo "/root/runmultipleSentinel${CODENAME}.sh" >> /root/runmultipleSentinel.sh			
-		fi  
-	
-	ln -s /usr/share/sentinel_${CODENAME}/${CODENAME}${NUM} /root/sentinel_directories/${CODENAME}${NUM}
-	
-	mkdir /var/log/sentinel_${CODENAME}
-	echo "rm -rf /var/log/sentinel_${CODENAME}" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_remove_sentinel_files.sh		
+			echo "/root/runmultipleSentinel${CODENAME}.sh" >> /root/runmultipleSentinel.sh
+		fi
 
-	echo "/sbin/runuser -l masternode -c 'export SENTINEL_CONFIG=/usr/share/sentinel_${CODENAME}/${CODENAME}${NUM}/sentinel.conf; /usr/share/sentinelvenv_${CODENAME}/bin/python /usr/share/sentinel_${CODENAME}/bin/sentinel.py'" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_runSentinelToSeeOutput.sh					
+	ln -s /usr/share/sentinel_${CODENAME}/${CODENAME}${NUM} /root/sentinel_directories/${CODENAME}${NUM}
+
+	mkdir /var/log/sentinel_${CODENAME}
+	echo "rm -rf /var/log/sentinel_${CODENAME}" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_remove_sentinel_files.sh
+
+	echo "/sbin/runuser -l masternode -c 'export SENTINEL_CONFIG=/usr/share/sentinel_${CODENAME}/${CODENAME}${NUM}/sentinel.conf; /usr/share/sentinelvenv_${CODENAME}/bin/python /usr/share/sentinel_${CODENAME}/bin/sentinel.py'" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_runSentinelToSeeOutput.sh
 
 	echo "cd /usr/share/sentinel_${CODENAME}/;exec bash" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_goToWhereSentinelConfsAre.sh
 	echo "cd /var/lib/masternodes/${CODENAME}${NUM};exec bash" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_goToWhereDataFilesAre.sh
 	echo "nano /usr/share/sentinel_${CODENAME}/${CODENAME}${NUM}_sentinel.conf" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_editSentinelConf.sh
 
         fi
-		
-	done 
-	
+
+	done
+
 	mkdir /root/sentinel_directories
 	ln -s /home/masternode/database/ /root/sentinel_directories/data_directories
 	ln -s /home/masternode/database/ /root/masternode_sentinel_data_directories
-	
+
     echo "Generated a Sentinel config for you. To activate Sentinel run"
-    
+
     echo "/sbin/runuser -l masternode -c 'export SENTINEL_CONFIG=/usr/share/sentinel_${CODENAME}/${CODENAME}${NUM}/sentinel.conf; /usr/share/sentinelvenv_${CODENAME}/bin/python /usr/share/sentinel_${CODENAME}/bin/sentinel.py 2>&1 >> /var/log/sentinel_${CODENAME}/sentinel-cron.log'"
     chmod +x /root/runmultipleSentinel${CODENAME}.sh
 	chmod +x /root/runmultipleSentinel.sh
-	
+
     chown -R masternode:masternode /home/masternode/
     chown -R masternode:masternode /usr/share/sentinel*
     chown -R masternode:masternode /usr/share/sentinelvenv*
 	if ! crontab -l | grep "/root/runmultipleSentinel.sh"; then
 		(crontab -l 2>/dev/null; echo "* * * * * /root/runmultipleSentinel.sh") | crontab -
 	fi
-    	
+
 }
 
 #
@@ -320,36 +305,36 @@ function configure_firewall() {
 #
 function validate_netchoice() {
 
-    echo "* Validating network rules"		
+    echo "* Validating network rules"
 
-	# break here of net isn't 4 or 6 
+	# break here of net isn't 4 or 6
 	if [ ${net} -ne 4 ] && [ ${net} -ne 6 ]; then
 		echo "invalid NETWORK setting, can only be 4 or 6!"
 		exit 1;
-	fi 
+	fi
 
 	# generate the required ipv6 config
 	if [ "${net}" -eq 4 ]; then
 	    IPV6_INT_BASE="#NEW_IPv4_ADDRESS_FOR_MASTERNODE_NUMBER"
 	    NETWORK_BASE_TAG=""
         echo "IPv4 address generation needs to be done manually atm!"  &>> ${SCRIPT_LOGFILE}
-	fi	# end ifneteq4		    
+	fi	# end ifneteq4
 
 }
 
 #
 # /* no parameters, generates one masternode configuration file per masternode in the default
 #    directory (eg. /etc/masternodes/${CODENAME} and replaces the existing placeholders if possible */
-# 
+#
 function create_mn_configuration() {
-    
+
         # always return to the script root
         cd ${SCRIPTPATH}
 
 	mkdir /root/mnTroubleshoot
 	mkdir /root/mnTroubleshoot/${CODENAME}
-	
-        
+
+
         # create one config file per masternode
         for NUM in $(seq 1 ${count}); do
         PASS=$(date | md5sum | cut -c1-24)
@@ -368,18 +353,18 @@ function create_mn_configuration() {
 				fi
 				# replace placeholders
 				echo "running sed on file ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf"                                &>> ${SCRIPT_LOGFILE}
-				sed -e "s/XXX_GIT_PROJECT_XXX/${CODENAME}/" -e "s/XXX_NUM_XXY/${NUM}]/" -e "s/XXX_NUM_XXX/${NUM}/" -e "s/XXX_PASS_XXX/${PASS}/" -e "s/XXX_IPV6_INT_BASE_XXX/[${IPV6_INT_BASE}/" -e "s/XXX_NETWORK_BASE_TAG_XXX/${NETWORK_BASE_TAG}/" -e "s/XXX_MNODE_INBOUND_PORT_XXX/${MNODE_INBOUND_PORT}/" -i ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf				   
+				sed -e "s/XXX_GIT_PROJECT_XXX/${CODENAME}/" -e "s/XXX_NUM_XXY/${NUM}]/" -e "s/XXX_NUM_XXX/${NUM}/" -e "s/XXX_PASS_XXX/${PASS}/" -e "s/XXX_IPV6_INT_BASE_XXX/[${IPV6_INT_BASE}/" -e "s/XXX_NETWORK_BASE_TAG_XXX/${NETWORK_BASE_TAG}/" -e "s/XXX_MNODE_INBOUND_PORT_XXX/${MNODE_INBOUND_PORT}/" -i ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
  				# insert privatekey
-						
+
 				sed -i 's/masternodeprivkey/\#masternodeprivkey/g'  ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
 
 				echo " " >> ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
 				cat /root/pk_${CODENAME}_${NUM}.txt >> ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
 				echo -e "\r\n" >> ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
-				
-				sed -i 's/rpcport/\#rpcport/g'  ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf				
+
+				sed -i 's/rpcport/\#rpcport/g'  ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
 				sed -i 's/bind/\#bind/g'  ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
-				
+
 				if [ ! -f /root/lastRpcPort ]; then
 					echo "5566" > /root/lastRpcPort
 				fi
@@ -393,104 +378,104 @@ function create_mn_configuration() {
 				if [ ! -f /root/ip4_${NUM}.txt ]; then
 					cat /root/ip4_1.txt|tr -d "\n" >> ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
 				else
-					cat /root/ip4_${NUM}.txt|tr -d "\n" >> ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf				
+					cat /root/ip4_${NUM}.txt|tr -d "\n" >> ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
 				fi
-				
+
 				if [ -e /root/mnport_${CODENAME}_${NUM}.txt ]; then
 					echo -n ":"  >> ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
 					cat /root/mnport_${CODENAME}_${NUM}.txt >> ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
 				else
 					echo ":${MNODE_INBOUND_PORT}"  >> ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
 				fi
-				
+
 				if [[ -z ${COIN_MASTERNODE_REPLACEMENT_STRING} ]]; then
 					echo "masternode will be used as masternode"
 				else
 					echo "masternode will be replaced with ${COIN_MASTERNODE_REPLACEMENT_STRING}" &>> ${SCRIPT_LOGFILE}
 					sed -i "s/masternode/${COIN_MASTERNODE_REPLACEMENT_STRING}/g" ${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf
-				fi	
+				fi
 
 
-			fi        			
-		
-			echo -n "/usr/local/bin/innova-cli -conf=/etc/masternodes/innova_n1.conf masternodelist full " > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_masternode_status_node.sh 
-			cut -d'=' -f2 /root/ip4_1.txt |tr -d "\n" >> /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_masternode_status_node.sh 
-		
+			fi
+
+			echo -n "/usr/local/bin/innova-cli -conf=/etc/masternodes/innova_n1.conf masternodelist full " > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_masternode_status_node.sh
+			cut -d'=' -f2 /root/ip4_1.txt |tr -d "\n" >> /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_masternode_status_node.sh
+
 		echo "/root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_stopService.sh;echo \"Will try to remove vivod if found\"; killall vivod;/sbin/runuser -l masternode -c '/usr/local/bin/${CODENAME}d -reindex -pid=/var/lib/masternodes/${CODENAME}${NUM}/${CODENAME}.pid -conf=/etc/masternodes/${CODENAME}_n${NUM}.conf -datadir=/var/lib/masternodes/${CODENAME}${NUM}'" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_reindex.sh
 
 		echo "/root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_stopService.sh;/sbin/runuser -l masternode -c '/usr/local/bin/${CODENAME}d -deamon -pid=/var/lib/masternodes/${CODENAME}${NUM}/${CODENAME}.pid -conf=/etc/masternodes/${CODENAME}_n${NUM}.conf -datadir=/var/lib/masternodes/${CODENAME}${NUM}'" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_restartWithoutService.sh
-		
-		echo "/usr/local/bin/${CODENAME}-cli -conf=/etc/masternodes/${CODENAME}_n${NUM}.conf getinfo" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_getInfo.sh
-		echo "/usr/local/bin/${CODENAME}-cli -conf=/etc/masternodes/${CODENAME}_n${NUM}.conf masternode status" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_masternode_status.sh		
-		echo "/usr/local/bin/${CODENAME}-cli -conf=/etc/masternodes/${CODENAME}_n${NUM}.conf mnsync status" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_masternode_sync_status.sh		
-		
-		echo "/usr/local/bin/${CODENAME}-cli -conf=/etc/masternodes/${CODENAME}_n${NUM}.conf getpeerinfo" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_masternode_getpeerinfo.sh		
-		echo "/usr/local/bin/${CODENAME}-cli -conf=/etc/masternodes/${CODENAME}_n${NUM}.conf masternode debug" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_masternode_debug.sh		
 
-		
-		echo "tail -f /var/lib/masternodes/${CODENAME}${NUM}/db.log" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_tail_the_db_log_file.sh				
-		echo "tail -f /var/lib/masternodes/${CODENAME}${NUM}/debug.log" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_tail_the_debug_log_file.sh				
-  
-  
-  
-  
+		echo "/usr/local/bin/${CODENAME}-cli -conf=/etc/masternodes/${CODENAME}_n${NUM}.conf getinfo" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_getInfo.sh
+		echo "/usr/local/bin/${CODENAME}-cli -conf=/etc/masternodes/${CODENAME}_n${NUM}.conf masternode status" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_masternode_status.sh
+		echo "/usr/local/bin/${CODENAME}-cli -conf=/etc/masternodes/${CODENAME}_n${NUM}.conf mnsync status" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_masternode_sync_status.sh
+
+		echo "/usr/local/bin/${CODENAME}-cli -conf=/etc/masternodes/${CODENAME}_n${NUM}.conf getpeerinfo" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_masternode_getpeerinfo.sh
+		echo "/usr/local/bin/${CODENAME}-cli -conf=/etc/masternodes/${CODENAME}_n${NUM}.conf masternode debug" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_masternode_debug.sh
+
+
+		echo "tail -f /var/lib/masternodes/${CODENAME}${NUM}/db.log" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_tail_the_db_log_file.sh
+		echo "tail -f /var/lib/masternodes/${CODENAME}${NUM}/debug.log" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_tail_the_debug_log_file.sh
+
+
+
+
 echo "cd;rm -rf vivoboot;mkdir vivoboot;cd vivoboot;wget http://bootstrap1.vivocoin.net/vivobootstrap.zip;apt-get install unzip -y;unzip vivobootstrap.zip;chown masternode:masternode bootstrap.dat;killall vivod;rm -rf /var/lib/masternodes/${CODENAME}${NUM}/*;mv ./bootstrap.dat /var/lib/masternodes/${CODENAME}${NUM}/;cd;rm -rf vivoboot;echo \"Will remove vivod if found (to restart)\";killall vivod;service ${CODENAME}_n${NUM} start" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_clear_and_load_bootstrap.sh
 
-  
-  
-  
- 	
-		echo "service ${CODENAME}_n${NUM} status" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_statusOfService.sh			
-		echo "service ${CODENAME}_n${NUM} stop" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_stopService.sh			
-		echo "service ${CODENAME}_n${NUM} start" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_startService.sh			
+
+
+
+
+		echo "service ${CODENAME}_n${NUM} status" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_statusOfService.sh
+		echo "service ${CODENAME}_n${NUM} stop" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_stopService.sh
+		echo "service ${CODENAME}_n${NUM} start" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_startService.sh
 
 		echo "cd ${SYSTEMD_CONF}/;exec bash" > /root/mnTroubleshoot/${CODENAME}_goToWhereServiceFilesAre.sh
-		echo "ls ${SYSTEMD_CONF}/${CODENAME}*;exec bash" > /root/mnTroubleshoot/${CODENAME}_listServiceFiles.sh		
+		echo "ls ${SYSTEMD_CONF}/${CODENAME}*;exec bash" > /root/mnTroubleshoot/${CODENAME}_listServiceFiles.sh
 
 		echo "cd /usr/local/bin/;exec bash" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_goToWhereMasternodeExecutablesAre.sh
 		echo "cd /var/lib/masternodes/${CODENAME}${NUM};exec bash" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_goToWhereDataFilesAre.sh
 		echo "cd /etc/masternodes/;exec bash" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_goToWhereMasternodeConfFilesAre.sh
-	
-		echo "rm -f /usr/local/bin/*${CODENAME}*" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_remove_executable.sh	
-		echo "rm -rf /var/lib/masternodes/${CODENAME}${NUM}/" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_remove_data_files.sh		
-		echo "rm -rf /var/lib/masternodes/${CODENAME}${NUM}" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_remove_data_files_AND_directory.sh		
-		
-		echo "rm -f /etc/masternodes/${CODENAME}_n${NUM}.conf" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_remove_conf.sh		
 
-		#get block count from explorer if in environment	
+		echo "rm -f /usr/local/bin/*${CODENAME}*" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_remove_executable.sh
+		echo "rm -rf /var/lib/masternodes/${CODENAME}${NUM}/" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_remove_data_files.sh
+		echo "rm -rf /var/lib/masternodes/${CODENAME}${NUM}" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_remove_data_files_AND_directory.sh
+
+		echo "rm -f /etc/masternodes/${CODENAME}_n${NUM}.conf" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_remove_conf.sh
+
+		#get block count from explorer if in environment
 		if [[ -z ${COIN_EXPLORER_BLOCKCOUNT} ]]; then
 			echo "no explorer block count available"
 		else
-			echo "(wget -q -O - $COIN_EXPLORER_BLOCKCOUNT)" > /root/mnTroubleshoot/${CODENAME}_getBlockCountFromExplorer.sh	
-		fi	
+			echo "(wget -q -O - $COIN_EXPLORER_BLOCKCOUNT)" > /root/mnTroubleshoot/${CODENAME}_getBlockCountFromExplorer.sh
+		fi
 
-		
-	
-		echo "rm -f /etc/masternodes/${CODENAME}_n${NUM}.conf" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_removeMasternodeConfFile.sh	
+
+
+		echo "rm -f /etc/masternodes/${CODENAME}_n${NUM}.conf" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_removeMasternodeConfFile.sh
 		echo "nano /etc/masternodes/${CODENAME}_n${NUM}.conf" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_editMasternodeConfFile.sh
 		echo "nano ${SYSTEMD_CONF}/${CODENAME}_n${NUM}.service" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_editMasternodeServiceFile.sh
-		
+
 		echo "service ${CODENAME}_n${NUM} stop;cd /var/lib/masternodes/${CODENAME}${NUM};rm -rf chainstate;rm -rf blocks;rm netfulfilled.dat;rm banlist.dat;rm fee_estimates.dat;rm mncache.dat;rm peers.dat;rm governance.dat;rm mnpayments.dat;service ${CODENAME}_n${NUM} start" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_clear_out_data_restart_with_blank_data.sh
 
 		echo "journalctl -u ${CODENAME}_n${NUM}.service -b" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_print_logs_of_service_of_current_boot.sh
-		echo "journalctl -u ${CODENAME}_n${NUM}.service" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_print_logs_of_service_of_current_boot.sh		
+		echo "journalctl -u ${CODENAME}_n${NUM}.service" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_print_logs_of_service_of_current_boot.sh
 
 		echo "netstat -plnt | grep "Program name"; netstat -plnt | grep ${CODENAME}" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_listening_on_what_ports.sh
-		
+
         done
 
 		echo "netstat -plnt | grep "Program name"; netstat -plnt | grep ${CODENAME}" > /root/mnTroubleshoot/${CODENAME}/${CODENAME}${NUM}_listening_on_what_ports.sh
-		
+
 		echo "chown -R masternode:masternode /home/masternode/" >> /root/mnTroubleshoot/fix_ownership_on_all.sh
 		echo "chown -R masternode:masternode /usr/share/sentinel*" >> /root/mnTroubleshoot/fix_ownership_on_all.sh
 		echo "chown -R masternode:masternode /usr/share/sentinelvenv*" >> /root/mnTroubleshoot/fix_ownership_on_all.sh
 		echo "chown -R masternode:masternode /usr/local/bin/" >> /root/mnTroubleshoot/fix_ownership_on_all.sh
 		echo "chown -R masternode:masternode /var/lib/masternodes/" >> /root/mnTroubleshoot/fix_ownership_on_all.sh
 		echo "chown -R masternode:masternode /etc/masternodes/" >> /root/mnTroubleshoot/fix_ownership_on_all.sh
-				
+
 		chmod +x /root/mnTroubleshoot/fix_ownership_on_all.sh
 		/root/mnTroubleshoot/fix_ownership_on_all.sh
-		
+
 		ln -s /usr/local/bin/ /root/masternode_executables
 		ln -s /etc/masternodes/ /root/masternode_conf_files
 		ln -s /var/lib/masternodes/ /root/masternode_data_directories
@@ -499,7 +484,7 @@ echo "cd;rm -rf vivoboot;mkdir vivoboot;cd vivoboot;wget http://bootstrap1.vivoc
 
 #
 # /* no parameters, generates a masternode configuration file per masternode in the default */
-# 
+#
 function create_control_configuration() {
 
     # delete any old stuff that's still around
@@ -507,7 +492,7 @@ function create_control_configuration() {
 	# create one line per masternode with the data we have
 	for NUM in $(seq 1 ${count}); do
 		cat >> /tmp/${CODENAME}_masternode.conf <<-EOF
-			${CODENAME}MN${NUM} [${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}]:${MNODE_INBOUND_PORT} MASTERNODE_PRIVKEY_FOR_${CODENAME}MN${NUM} COLLATERAL_TX_FOR_${CODENAME}MN${NUM} OUTPUT_NO_FOR_${CODENAME}MN${NUM}	
+			${CODENAME}MN${NUM} [${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}]:${MNODE_INBOUND_PORT} MASTERNODE_PRIVKEY_FOR_${CODENAME}MN${NUM} COLLATERAL_TX_FOR_${CODENAME}MN${NUM} OUTPUT_NO_FOR_${CODENAME}MN${NUM}
 		EOF
 	done
 
@@ -515,7 +500,7 @@ function create_control_configuration() {
 
 #
 # /* no parameters, generates a a pre-populated masternode systemd config file */
-# 
+#
 function create_systemd_configuration() {
 
     echo "* (over)writing systemd config files for masternodes"
@@ -527,16 +512,16 @@ function create_systemd_configuration() {
 			[Unit]
 			Description=${CODENAME} distributed currency daemon
 			After=network.target
-                 
+
 			[Service]
 			User=${MNODE_USER}
 			Group=${MNODE_USER}
-         	
+
 			Type=forking
 			PIDFile=${MNODE_DATA_BASE}/${CODENAME}${NUM}/${CODENAME}.pid
 			ExecStart=${MNODE_DAEMON} -daemon -pid=${MNODE_DATA_BASE}/${CODENAME}${NUM}/${CODENAME}.pid \
 			-conf=${MNODE_CONF_BASE}/${CODENAME}_n${NUM}.conf -datadir=${MNODE_DATA_BASE}/${CODENAME}${NUM}
-       		 
+
 			Restart=always
 			RestartSec=70
 			PrivateTmp=true
@@ -544,9 +529,9 @@ function create_systemd_configuration() {
 			TimeoutStartSec=5s
 			StartLimitInterval=120s
 			StartLimitBurst=15
-         	
+
 			[Install]
-			WantedBy=multi-user.target			
+			WantedBy=multi-user.target
 		EOF
 	done
 
@@ -554,21 +539,21 @@ function create_systemd_configuration() {
 
 #
 # /* set all permissions to the masternode user */
-# 
+#
 function set_permissions() {
 
 	# maybe add a sudoers entry later
-	chown -R ${MNODE_USER}:${MNODE_USER} ${MNODE_CONF_BASE} ${MNODE_DATA_BASE} /var/log/sentinel* &>> ${SCRIPT_LOGFILE}	
+	chown -R ${MNODE_USER}:${MNODE_USER} ${MNODE_CONF_BASE} ${MNODE_DATA_BASE} /var/log/sentinel* &>> ${SCRIPT_LOGFILE}
 
 }
 
 #
 # /* wipe all files and folders generated by the script for a specific project */
-# 
+#
 function wipe_all() {
-    
-    echo "Deleting all ${project} related data!" 
-	rm -f /etc/masternodes/${project}_n*.conf 
+
+    echo "Deleting all ${project} related data!"
+	rm -f /etc/masternodes/${project}_n*.conf
 	rmdir --ignore-fail-on-non-empty -p /var/lib/masternodes/${project}*
 	rm -f /etc/systemd/system/${project}_n*.service
 	rm -f ${MNODE_DAEMON}
@@ -582,7 +567,7 @@ function wipe_all() {
 # remove packages and stuff we don't need anymore and set some recommended
 # kernel parameters
 # */
-# 
+#
 function cleanup_after() {
 
 	apt-get -qqy -o=Dpkg::Use-Pty=0 --force-yes autoremove
@@ -599,28 +584,28 @@ function cleanup_after() {
 	echo "net.ipv4.conf.all.send_redirects=0" >> /etc/sysctl.conf &>> ${SCRIPT_LOGFILE}
 	echo "kernel.sysrq=0" >> /etc/sysctl.conf &>> ${SCRIPT_LOGFILE}
 	echo "net.ipv4.tcp_timestamps=0" >> /etc/sysctl.conf &>> ${SCRIPT_LOGFILE}
-	echo "net.ipv4.tcp_syncookies=1" >> /etc/sysctl.conf &>> ${SCRIPT_LOGFILE} 
+	echo "net.ipv4.tcp_syncookies=1" >> /etc/sysctl.conf &>> ${SCRIPT_LOGFILE}
 	echo "net.ipv4.icmp_ignore_bogus_error_responses=1" >> /etc/sysctl.conf &>> ${SCRIPT_LOGFILE}
 	sysctl -p
-	
+
 }
 
 #
 # /* project as parameter, sources the project specific parameters and runs the main logic */
-# 
+#
 
 # source the default and desired crypto configuration files
 function source_config() {
 
-    SETUP_CONF_FILE="${SCRIPTPATH}/config/${project}/${project}.env" 
+    SETUP_CONF_FILE="${SCRIPTPATH}/config/${project}/${project}.env"
     #SENTINEL_URL=https://github.com/vivocoin/sentinel.git
 
     # first things first, to break early if things are missing or weird
     check_distro
-        
+
 	if [ -f ${SETUP_CONF_FILE} ]; then
 		echo "Script version ${SCRIPT_VERSION}, you picked: ${project}"
-		echo "apply config file for ${project}"	&>> ${SCRIPT_LOGFILE}	
+		echo "apply config file for ${project}"	&>> ${SCRIPT_LOGFILE}
 		source "${SETUP_CONF_FILE}"
 
 		# count is from the default config but can ultimately be
@@ -644,13 +629,13 @@ function source_config() {
 		if [ -z "${net}" ]; then
 			net=${NETWORK_TYPE}
 			echo "net EMPTY, setting to default: ${NETWORK_TYPE}" &>> ${SCRIPT_LOGFILE}
-		fi			 			
+		fi
 
 		# main block of function logic starts here
 	    # if update flag was given, delete the old daemon binary first & proceed
 		if [ "$update" -eq 1 ]; then
 			echo "update given, deleting the old daemon NOW!" &>> ${SCRIPT_LOGFILE}
-			rm -f ${MNODE_DAEMON}  	 
+			rm -f ${MNODE_DAEMON}
 			apt-get -y remove fail2ban
 			apt-get -y remove --auto-remove fail2ban
 			apt-get -y purge fail2ban
@@ -667,8 +652,8 @@ function source_config() {
         echo "=> ${count} ${project} masternode(s) in version ${SCVERSION} "
         echo "for you now."
 		if [ "$binary" -eq 1 ]; then
-			echo "I will get binaries install them." 	 
-		fi	
+			echo "I will get binaries install them."
+		fi
 
 
 		echo "Stay tuned!"
@@ -676,7 +661,7 @@ function source_config() {
 		# show a hint for MANUAL IPv4 configuration
 		if [ "${net}" -eq 4 ]; then
 			NETWORK_TYPE=4
-			
+
 			echo "See the following link for instructions how to add multiple ipv4 addresses on vultr:"
 			echo "${IPV4_DOC_LINK}"
 			if [ ! -f /root/ip4_1.txt ]; then
@@ -685,71 +670,71 @@ function source_config() {
 				echo "Will be using {$ipvariable} as your IP. If you want to change them you will have to go to etc/masternodes and change the conf file."
 			fi
 
-		fi        
-		# sentinel setup 
+		fi
+		# sentinel setup
 		if [ "$sentinel" -eq 1 ]; then
-			
-			echo "I will also generate a Sentinel configuration for you." 	 
-		fi	
+
+			echo "I will also generate a Sentinel configuration for you."
+		fi
 		echo ""
 		echo "A logfile for this run can be found at the following location:"
 		echo "${SCRIPT_LOGFILE}"
 		echo ""
 		echo "*************************************************************************************"
 		sleep 5
-		
+
 		# main routine
         prepare_mn_interfaces
         #swaphack
 		create_mn_user
-        install_packages	
+        install_packages
 
 		if [ "$binary" -eq 1 ]; then
 			echo "Will grab binaries."
-#zzzzzzzzz			
+#zzzzzzzzz
 
 			if [ $count -gt 1 ]; then
 				echo "creating swap for binaries !!!!!!" >>  ${SCRIPT_LOGFILE}
 				#swaphack
 			fi
-			bdb			
+			bdb
 			build_mn_with_binary
-		fi	
-		
-		
+		fi
+
+
 		if [ "$greatswap" -eq 1 ]; then
-			echo "Will build swap for binary." 	 
+			echo "Will build swap for binary."
 			#swaphack
-		fi	
-				
+		fi
+
 		if [ "$binary" -eq 0 ]; then
-			echo "Will build source." 	 
+			echo "Will build source."
 			#swaphack
 			bdb
 			build_mn_from_source
-		fi	
-		
+		fi
+
 		create_mn_dirs
-		echo "--- What to do about sentinel ..." >> /root/sentinelInstalledOrNot.txt				
-		echo "The sentine url is: ${SENTINEL_URL}" >> /root/sentinelInstalledOrNot.txt				
-		# sentinel setup 
+		echo "--- What to do about sentinel ..." >> /root/sentinelInstalledOrNot.txt
+		echo "The sentine url is: ${SENTINEL_URL}" >> /root/sentinelInstalledOrNot.txt
+		# sentinel setup
 		if [ "$sentinel" -eq 1 ]; then
 			if [[ -z ${SENTINEL_URL} ]]; then
 				echo "DID NOT FIND SENTINEL GIT URL FOR THIS COIN"
-				echo "DID NOT FIND SENTINEL GIT URL FOR THIS COIN for ${CODENAME}" >> /root/sentinelInstalledOrNot.txt				
+				echo "DID NOT FIND SENTINEL GIT URL FOR THIS COIN for ${CODENAME}" >> /root/sentinelInstalledOrNot.txt
 				remove_sentinel_setup_for_coin
 			else
 				echo "* Sentinel setup chosen" &>> ${SCRIPT_LOGFILE}
-				echo "FOUND SENTINEL GIT URL FOR THIS COIN - installing for ${CODENAME}" >> /root/sentinelInstalledOrNot.txt								
-				create_sentinel_setup  	 
-			fi	
-				
+				echo "FOUND SENTINEL GIT URL FOR THIS COIN - installing for ${CODENAME}" >> /root/sentinelInstalledOrNot.txt
+				create_sentinel_setup
+			fi
+
 		fi
-		
-		configure_firewall      
+
+		configure_firewall
 		create_mn_configuration
 		create_control_configuration
-		create_systemd_configuration 
+		create_systemd_configuration
 		set_permissions
 		cleanup_after
 		chmod -R +x /root/mnTroubleshoot
@@ -761,16 +746,16 @@ function source_config() {
 			echo "cli will be replaced with ${CODENAME}d" &>> ${SCRIPT_LOGFILE}
 			find /root/mnTroubleshoot -type f | xargs sed -i "s_${CODENAME}-cli_${COIN_CLI}_g"
 			echo "/root/mnTroubleshoot -type f | xargs sed -i \"s_${CODENAME}-cli_${COIN_CLI}_g\"" > replaceCli.sh
-			
-		fi	
+
+		fi
 		if [[ -z ${COIN_MASTERNODE_REPLACEMENT_STRING} ]]; then
 			echo "user masternode will be used as masternode"
 		else
 			echo "masternode will be replaced with ${COIN_MASTERNODE_REPLACEMENT_STRING}" &>> ${SCRIPT_LOGFILE}
 			find /root/mnTroubleshoot/${CODENAME}/ -type f | xargs sed -i "s_ masternode _ ${COIN_MASTERNODE_REPLACEMENT_STRING} _g"
-			echo "/root/mnTroubleshoot/${CODENAME}/ -type f | xargs sed -i \"s_ masternode _ ${COIN_MASTERNODE_REPLACEMENT_STRING} _g\""  > /root/mnTroubleshoot/${CODENAME}/replaceMasternodeString.sh			
-		fi	
-				
+			echo "/root/mnTroubleshoot/${CODENAME}/ -type f | xargs sed -i \"s_ masternode _ ${COIN_MASTERNODE_REPLACEMENT_STRING} _g\""  > /root/mnTroubleshoot/${CODENAME}/replaceMasternodeString.sh
+		fi
+
 		cd /home/masternode
 		chown -R masternode:masternode /home/masternode/
 		chown -R masternode:masternode /usr/share/sentinel*
@@ -787,14 +772,14 @@ function source_config() {
 		chmod 755 /lib
 		cp /root/interfaces /etc/network/interfaces
 		touch /root/installCompleted
-		
-		final_call 
-		/usr/local/bin/activate_masternodes_${CODENAME}		
+
+		final_call
+		/usr/local/bin/activate_masternodes_${CODENAME}
 	else
 		echo "required file ${SETUP_CONF_FILE} does not exist, abort!"
-		exit 1   
+		exit 1
 	fi
-	
+
 }
 
 #instead of building from source just installing binary - for ubuntu 16 only
@@ -814,9 +799,9 @@ apt-get install -y git virtualenv
 
 	/root/mnTroubleshoot/vivo/vivo1_stopService.sh
 	killall vivod
- 
+
 	cd
-	rm -rf vtemp	
+	rm -rf vtemp
 	mkdir vtemp
 	cd vtemp
 	mkdir /usr/local
@@ -830,12 +815,12 @@ apt-get install -y git virtualenv
 	//wget https://github.com/vivocoin/vivo/releases/download/v0.12.1.12/vivo-0.12.1.12-ubuntu16-vps-nogui.tgz
 	rm vivo-0.12.1.14-ubuntu16-vps-nogui.tgz
 	wget https://github.com/vivocoin/vivo/releases/download/v0.12.1.14/vivo-0.12.1.14-ubuntu16-vps-nogui.tgz
-	
+
 	#//wget https://github.com/vivocoin/vivo/releases/download/v0.12.1.12/Vivo-0.12.1.12-ubuntu16.tar.gz
 	#//wget https://github.com/vivocoin/vivo/releases/download/v0.12.1.8/Vivo-0.12.1.8-ubuntu16.04.tar.gz
 	#//wget https://github.com/vivocoin/vivo/releases/download/v0.12.1.9/vivo-0.12.1.9-ubuntu16-vps-nogui.tgz
 	tar -xvf vivo-0.12.1.14-ubuntu16-vps-nogui.tgz
-	
+
 	if [[ -r /etc/os-release ]]; then
 		. /etc/os-release
 		if [[ "${VERSION_ID}" > "16.04" ]]; then
@@ -846,8 +831,8 @@ apt-get install -y git virtualenv
 				tar -xvf vivo-0.12.1.14-ubuntu18.tar.gz
 		fi
 	fi
-	
-	
+
+
 	cd vivo
 	cp * /usr/local/bin/
 	chown masternode:masternode /usr/local/bin
@@ -856,13 +841,13 @@ apt-get install -y git virtualenv
 	chown -R masternode:masternode /usr/local/bin
 	cd
 	rm -rf vtemp
-	
+
 }
 
 
 #
 # /* no parameters, builds the required masternode binary from sources. Exits if already exists and "update" not given  */
-# 
+#
 function build_mn_from_source() {
         # daemon not found compile it
         if [ ! -f ${MNODE_DAEMON} ]; then
@@ -872,13 +857,13 @@ function build_mn_from_source() {
                         mkdir -p ${CODE_DIR} && cd ${SCRIPTPATH}/${CODE_DIR} &>> ${SCRIPT_LOGFILE}
                         git clone ${GIT_URL} ${CODENAME}          &>> ${SCRIPT_LOGFILE}
                         cd ${SCRIPTPATH}/${CODE_DIR}/${CODENAME}  &>> ${SCRIPT_LOGFILE}
-                        echo "* Checking out desired GIT tag: ${release}"   
+                        echo "* Checking out desired GIT tag: ${release}"
                         git checkout ${release}                   &>> ${SCRIPT_LOGFILE}
                 else
                         echo "* Updating the existing GIT repo"
                         cd ${SCRIPTPATH}/${CODE_DIR}/${CODENAME}  &>> ${SCRIPT_LOGFILE}
                         git pull                                  &>> ${SCRIPT_LOGFILE}
-                        echo "* Checking out desired GIT tag: ${release}"                      
+                        echo "* Checking out desired GIT tag: ${release}"
                         git checkout ${release}                   &>> ${SCRIPT_LOGFILE}
                 fi
 
@@ -887,48 +872,48 @@ function build_mn_from_source() {
                 if [ -f "${SCRIPTPATH}/assets/$CODENAME.jpg" ]; then
                         jp2a -b --colors --width=56 ${SCRIPTPATH}/assets/${CODENAME}.jpg
                 else
-                        jp2a -b --colors --width=56 ${SCRIPTPATH}/assets/default.jpg          
-                fi  
+                        jp2a -b --colors --width=56 ${SCRIPTPATH}/assets/default.jpg
+                fi
                 # compilation starts here
                 source ${SCRIPTPATH}/config/${CODENAME}/${CODENAME}.compile | pv -t -i0.1
         else
                 echo "* Daemon already in place at ${MNODE_DAEMON}, not compiling"
         fi
-        
+
 		# if it's not available after compilation, theres something wrong
         if [ ! -f ${MNODE_DAEMON} ]; then
 		echo ${MNODE_DAEMON}
-                echo "COMPILATION FAILED! Please open an issue for coolblock on discord https://discord.gg/V74WQM . Thank you!"
-                exit 1        
-        fi       
+                echo "COMPILATION FAILED! Please open an issue. Thank you!"
+                exit 1
+        fi
 }
 
 #
 # /* no parameters, print some (hopefully) helpful advice  */
-# 
+#
 function final_call() {
     echo "=> All configuration files are in: ${MNODE_CONF_BASE}"
     echo "=> All Data directories are in: ${MNODE_DATA_BASE}"
 	echo ""
-    	
+
 	toilet -f bigmono9 -F gay Finishing
-	
+
     # place future helper script accordingly
     cp ${SCRIPTPATH}/scripts/activate_masternodes.sh ${MNODE_HELPER}_${CODENAME}
 	echo "">> ${MNODE_HELPER}_${CODENAME}
-	
+
 	for NUM in $(seq 1 ${count}); do
 		echo "systemctl enable ${CODENAME}_n${NUM}" >> ${MNODE_HELPER}_${CODENAME}
 		echo "systemctl restart ${CODENAME}_n${NUM}" >> ${MNODE_HELPER}_${CODENAME}
 	done
-     
+
 	chmod u+x ${MNODE_HELPER}_${CODENAME}
 	tput sgr0
 }
 
 #
 # /* no parameters, create the required network configuration. IPv6 is auto.  */
-# 
+#
 
 function prepare_mn_interfaces() {
 
@@ -958,8 +943,8 @@ function prepare_mn_interfaces1() {
         echo "Default interface is down, fallback didn't work. Break here."
         exit 1
     fi
-    
-    # DO ipv6 fix, are we on DO? 
+
+    # DO ipv6 fix, are we on DO?
     # check for DO network config file
     if [ -f ${DO_NET_CONF} ]; then
         # found the DO config
@@ -971,11 +956,11 @@ function prepare_mn_interfaces1() {
     fi
 
     IPV6_INT_BASE="$(ip -6 addr show dev ${ETH_INTERFACE} | grep inet6 | awk -F '[ \t]+|/' '{print $3}' | grep -v ^fe80 | grep -v ^::1 | cut -f1-4 -d':' | head -1)" &>> ${SCRIPT_LOGFILE}
-	
+
 	validate_netchoice
 	echo "IPV6_INT_BASE AFTER : ${IPV6_INT_BASE}" &>> ${SCRIPT_LOGFILE}
 
-    # user opted for ipv6 (default), so we have to check for ipv6 support	
+    # user opted for ipv6 (default), so we have to check for ipv6 support
 	# check for vultr ipv6 box active
 	if [ -z "${IPV6_INT_BASE}" ] && [ ${net} -ne 4 ]; then
 		echo "No IPv6 support on the VPS but IPv6 is the setup default. Please switch to ipv4 with flag \"-n 4\" if you want to continue."
@@ -983,20 +968,20 @@ function prepare_mn_interfaces1() {
 		echo "See the following link for instructions how to add multiple ipv4 addresses on vultr:"
 		echo "${IPV4_DOC_LINK}"
 		exit 1
-	fi	
-		
+	fi
+
 	# generate the required ipv6 config
 	if [ "${net}" -eq 6 ]; then
         # vultr specific, needed to work
 	    sed -ie '/iface ${ETH_INTERFACE} inet6 auto/s/^/#/' ${NETWORK_CONFIG}
-	    
+
 		# move current config out of the way first
 		cp ${NETWORK_CONFIG} ${NETWORK_CONFIG}.${DATE_STAMP}.bkp
 
-		# create the additional ipv6 interfaces, rc.local because it's more generic 	    
+		# create the additional ipv6 interfaces, rc.local because it's more generic
 		for NUM in $(seq 1 ${count}); do
 
-			# check if the interfaces exist	    
+			# check if the interfaces exist
 			ip -6 addr | grep -qi "${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}"
 			if [ $? -eq 0 ]
 			then
@@ -1006,10 +991,10 @@ function prepare_mn_interfaces1() {
 			  echo "ip -6 addr add ${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}/64 dev ${ETH_INTERFACE}" >> ${NETWORK_CONFIG}
 			  sleep 2
 			  ip -6 addr add ${IPV6_INT_BASE}:${NETWORK_BASE_TAG}::${NUM}/64 dev ${ETH_INTERFACE} &>> ${SCRIPT_LOGFILE}
-			fi	
-		done # end forloop	    
+			fi
+		done # end forloop
 	fi # end ifneteq6
-	
+
 }
 
 ##################------------Menu()---------#####################################
@@ -1025,15 +1010,15 @@ greatswap=0;
 
 # Execute getopt
 ARGS=$(getopt -o "hp:n:c:r:wsudbg" -l "help,project:,net:,count:,release:,wipe,sentinel,update,debug,binary,greatswap" -n "installNG.sh" -- "$@");
- 
+
 #Bad arguments
 if [ $? -ne 0 ];
 then
     help;
 fi
- 
+
 eval set -- "$ARGS";
- 
+
 while true; do
     case "$1" in
         -h|--help)
@@ -1042,7 +1027,7 @@ while true; do
             ;;
         -p|--project)
             shift;
-                    if [ -n "$1" ]; 
+                    if [ -n "$1" ];
                     then
                         project="$1";
                         shift;
@@ -1050,7 +1035,7 @@ while true; do
             ;;
         -n|--net)
             shift;
-                    if [ -n "$1" ]; 
+                    if [ -n "$1" ];
                     then
                         net="$1";
                         shift;
@@ -1058,7 +1043,7 @@ while true; do
             ;;
         -c|--count)
             shift;
-                    if [ -n "$1" ]; 
+                    if [ -n "$1" ];
                     then
                         count="$1";
                         shift;
@@ -1066,7 +1051,7 @@ while true; do
             ;;
         -r|--release)
             shift;
-                    if [ -n "$1" ]; 
+                    if [ -n "$1" ];
                     then
                         release="$1";
                         shift;
@@ -1079,7 +1064,7 @@ while true; do
         -s|--sentinel)
             shift;
                     sentinel="1";
-            ;;            
+            ;;
         -u|--update)
             shift;
                     update="1";
@@ -1087,35 +1072,35 @@ while true; do
         -d|--debug)
             shift;
                     debug="1";
-            ;;            
+            ;;
        -b|--binary)
             shift;
                     binary="1";
-            ;;            
+            ;;
        -b|--greatswap)
             shift;
                     greatswap="1";
-            ;;            
+            ;;
          --)
             shift;
             break;
             ;;
     esac
 done
- 
+
 # Check required arguments
 if [ -z "$project" ]
 then
     show_help;
 fi
- 
+
 # Check required arguments
 if [ "$wipe" -eq 1 ]; then
 	get_confirmation "Would you really like to WIPE ALL DATA!? YES/NO y/n" && wipe_all
 	exit 0
-fi		
- 
- 
+fi
+
+
 #################################################
 # source default config before everything else
 source ${SCRIPTPATH}/config/default.env
@@ -1125,7 +1110,7 @@ main() {
 
     echo "starting" &> ${SCRIPT_LOGFILE}
     showbanner
-    
+
 	# debug
 	if [ "$debug" -eq 1 ]; then
 		echo "********************** VALUES AFTER CONFIG SOURCING: ************************"
@@ -1134,7 +1119,7 @@ main() {
 		echo "SSH_INBOUND_PORT:     ${SSH_INBOUND_PORT}"
 		echo "SYSTEMD_CONF:         ${SYSTEMD_CONF}"
 		echo "NETWORK_CONFIG:       ${NETWORK_CONFIG}"
-		echo "NETWORK_TYPE:         ${NETWORK_TYPE}"	
+		echo "NETWORK_TYPE:         ${NETWORK_TYPE}"
 		echo "ETH_INTERFACE:        ${ETH_INTERFACE}"
 		echo "MNODE_CONF_BASE:      ${MNODE_CONF_BASE}"
 		echo "MNODE_DATA_BASE:      ${MNODE_DATA_BASE}"
@@ -1142,13 +1127,13 @@ main() {
 		echo "MNODE_HELPER:         ${MNODE_HELPER}"
 		echo "MNODE_SWAPSIZE:       ${MNODE_SWAPSIZE}"
 		echo "CODE_DIR:             ${CODE_DIR}"
-		echo "SETUP_MNODES_COUNT:   ${SETUP_MNODES_COUNT}"	
+		echo "SETUP_MNODES_COUNT:   ${SETUP_MNODES_COUNT}"
 		echo "END DEFAULTS => "
 	fi
-	
-	# source project configuration         
+
+	# source project configuration
     source_config ${project}
-    
+
 	# debug
 	if [ "$debug" -eq 1 ]; then
 		echo "START PROJECT => "
@@ -1158,19 +1143,19 @@ main() {
 		echo "MNODE_INBOUND_PORT:   ${MNODE_INBOUND_PORT}"
 		echo "GIT_URL:              ${GIT_URL}"
 		echo "SCVERSION:            ${SCVERSION}"
-		echo "NETWORK_BASE_TAG:     ${NETWORK_BASE_TAG}"	
-		echo "END PROJECT => "   	
-		 
+		echo "NETWORK_BASE_TAG:     ${NETWORK_BASE_TAG}"
+		echo "END PROJECT => "
+
 		echo "START OPTIONS => "
 		echo "RELEASE: ${release}"
 		echo "PROJECT: ${project}"
 		echo "SETUP_MNODES_COUNT: ${count}"
 		echo "NETWORK_TYPE: ${NETWORK_TYPE}"
-		echo "NETWORK_TYPE: ${net}"         
-	   
+		echo "NETWORK_TYPE: ${net}"
+
 		echo "END OPTIONS => "
 		echo "********************** VALUES AFTER CONFIG SOURCING: ************************"
-	fi    
+	fi
 }
 
 main "$@"
