@@ -4,21 +4,21 @@ For 1 (one) masternode
 
 Install binaries FOR total of 1 masternode
 
-wget -qO- https://raw.githubusercontent.com/coolblock/vpsVivo/master/utils/vivo/1vivobin.sh | sudo bash
+wget -qO- https://raw.githubusercontent.com/rareko/vpsVivo/master/utils/vivo/1vivobin.sh | sudo bash
 
 Update binaries  FOR total of 1 masternode
 
-wget -qO- https://raw.githubusercontent.com/coolblock/vpsVivo/master/utils/vivo/1vivobinUpdate.sh | sudo bash
+wget -qO- https://raw.githubusercontent.com/rareko/vpsVivo/master/utils/vivo/1vivobinUpdate.sh | sudo bash
 
 ## For Multiple Masternodes (two or more)
 
 Install binaries by using the following line and respond to the prompts. You will need private keys and a choice of ports.
 
-bash <(curl -s https://raw.githubusercontent.com/coolblock/vpsVivo/master/utils/vivo/1vivobinMulti.sh)
+bash <(curl -s https://raw.githubusercontent.com/rareko/vpsVivo/master/utils/vivo/1vivobinMulti.sh)
 
 If you have installed using any of the scripts already, to add more masternodes (you will tell how many by saying how many in TOTAL you will have on the machine)
 
-bash <(curl -s https://raw.githubusercontent.com/coolblock/vpsVivo/master/utils/vivo/AddMnBinMulti.sh)
+bash <(curl -s https://raw.githubusercontent.com/rareko/vpsVivo/master/utils/vivo/AddMnBinMulti.sh)
 
 (it is recomended to add one at a time. When you have 1 masternode already, say total of 2. Then when you have started the second one, run the script again but say total of 3. and on and on.)
 
@@ -26,16 +26,16 @@ bash <(curl -s https://raw.githubusercontent.com/coolblock/vpsVivo/master/utils/
 
 The command to use on the VPS is (all one line):
 
-bash <(curl -s https://raw.githubusercontent.com/coolblock/vpsVivo/master/utils/vivo/1vivobinMulti.sh)
+bash <(curl -s https://raw.githubusercontent.com/rareko/vpsVivo/master/utils/vivo/1vivobinMulti.sh)
 
-Let us assume you are setting up 4 Masternodes on one Vultr 1 gig machine. 
+Let us assume you are setting up 4 Masternodes on one Vultr 1 gig machine.
 
-1.	Have your private keys and your four ports ready. (You can chose whatever port you want as long as it is approximately above 1500 and less that 65000 - each masternode will have to have a different one) 
-2.	Then run the script. 
+1.	Have your private keys and your four ports ready. (You can chose whatever port you want as long as it is approximately above 1500 and less that 65000 - each masternode will have to have a different one)
+2.	Then run the script.
 3.	Let the VPS masternodes sync, they will take half a day to sync.
 4.	Then send 1000 to an address
-5.	Wait for at least 20 confirmations and insert the proper line in the masternode.conf file or the controlling wallet. 
-6.	Once set up in the controlling wallet, start alias. 
+5.	Wait for at least 20 confirmations and insert the proper line in the masternode.conf file or the controlling wallet.
+6.	Once set up in the controlling wallet, start alias.
 7.	You can now safely go to step 4 for the next masternode.
 
 If you don't do it in this sequence, when you send the 1000 coins you may send from or to an address that is not locked.
@@ -51,17 +51,17 @@ More detailed info below:
 
 (keep in mind if you have other coins installed with other scripts there may be conflicts that can't be fixed)
 
-Have a private key ready by going to your (controlling) wallet, to the debug console and typing in 
+Have a private key ready by going to your (controlling) wallet, to the debug console and typing in
 
 masternode genkey
 
 To Install 1 vivo masternode in one shot cut and paste the following line and press enter (as root)
 
-wget -qO- https://raw.githubusercontent.com/coolblock/vpsVivo/master/utils/vivo/1vivobin.sh | sudo bash
+wget -qO- https://raw.githubusercontent.com/rareko/vpsVivo/master/utils/vivo/1vivobin.sh | sudo bash
 
 (if you are asked what kind of mail configuration you want, just say none, or no configuration)
 
-once it has finished, in order to confirm that vivo is running, type in 
+once it has finished, in order to confirm that vivo is running, type in
 
 top
 
@@ -77,7 +77,7 @@ To check the status, you can run the following multiple times and the numbers wi
 
 To update without building from source you use this line (as root):
 
-wget -qO- https://raw.githubusercontent.com/coolblock/vpsVivo/master/utils/vivo/1vivobinUpdate.sh | sudo bash
+wget -qO- https://raw.githubusercontent.com/rareko/vpsVivo/master/utils/vivo/1vivobinUpdate.sh | sudo bash
 
 This will erase the old binary and install the new one. It will not update your conf files.
 
@@ -97,7 +97,7 @@ Ideally you will have at least a 1 gig ram machine. A 512 might (and might NOT) 
 
 Run the following entire line in ssh: (have your private key ready)
 
-wget -qO- https://raw.githubusercontent.com/coolblock/vpsVivo/master/utils/vivo/1vivo.sh | sudo bash
+wget -qO- https://raw.githubusercontent.com/rareko/vpsVivo/master/utils/vivo/1vivo.sh | sudo bash
 
 ## Option 2 Installation with Source
 If you have trouble or you want to use multiple commands you can:
@@ -105,7 +105,7 @@ cd
 
 apt install -y git screen
 
-git clone https://github.com/coolblock/vpsVivo.git
+git clone https://github.com/rareko/vpsVivo.git
 
 -- then type in sreen and hit enter twice and enter
 
@@ -130,7 +130,7 @@ This is updating a system that used this system to install. It will not update a
 
 The following is one single line.
 
-wget https://raw.githubusercontent.com/coolblock/vpsVivo/master/coinMnUpdate.sh;chmod +x coinMnUpdate.sh;./coinMnUpdate.sh vivo 1
+wget https://raw.githubusercontent.com/rareko/vpsVivo/master/coinMnUpdate.sh;chmod +x coinMnUpdate.sh;./coinMnUpdate.sh vivo 1
 
 This will rebuild vivo
 
@@ -140,7 +140,7 @@ cd
 
 rm -rf vpsVivo
 
-git clone https://github.com/coolblock/vpsVivo.git
+git clone https://github.com/rareko/vpsVivo.git
 
 /root/vpsVivo/coinMnUpdate.sh vivo 1
 
@@ -180,7 +180,7 @@ http://bootstrap1.vivocoin.net/vivobootstrap.zip
 99 percent of the time, if it does not start, the problem is because of invalid private key or a mistake on the the cold wallet (the controlling wallet).
 
 If you have made a mistake with your privatekey,
- 
+
 nano /etc/masternodes/vivo_n1.conf
 
 Go the the bottom and fix it
@@ -192,7 +192,7 @@ reboot
 That will restart everything.
 
 
-Remember you can type in 
+Remember you can type in
 
 reboot
 
@@ -205,12 +205,12 @@ The first troubleshooting script to run is
 
 It will tell you what it ran and what the result was.
 
-To see if the deamon is running: 
+To see if the deamon is running:
 service vivo_n1 status
 
 Or you can look at top and see if vivod exists in the list
 
-To start the deamon: 
+To start the deamon:
 service vivo_n1 start
 
 If it does not start, to trouble shoot the "starting":
@@ -251,23 +251,23 @@ service vivo_n1 stop;/sbin/runuser -l masternode -c '/usr/local/bin/vivod -reind
 
 For those who want to install multiple masternodes, each masternode has to have its own private key and its own ip to bind to.
 
-The ip of the first masternode was in 
+The ip of the first masternode was in
 
 /root/ip4_1.txt
 
-The ip of the second masternode should go in 
+The ip of the second masternode should go in
 
 /root/ip4_2.txt
 
-The private key of the first masternode will be in: 
+The private key of the first masternode will be in:
 
 /root/pk_vivo_1.txt
 
-The private key of the second masternode should go in: 
+The private key of the second masternode should go in:
 
 /root/pk_vivo_2.txt
 
-Now for a total of two masternodes you must run 
+Now for a total of two masternodes you must run
 
 /root/vpsVivo/coinMnInstall.sh vivo 2
 
@@ -284,9 +284,3 @@ or
 as many as your system can handle. Remember each has its own database and will take space. Also you will need enough cpu power to run multiple masternodes.
 
 These each will have their separate sentinel installs.
-
-
-
-
-
-
