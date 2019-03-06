@@ -55,7 +55,7 @@ getMasternodePrivKey() {
         fi
     done
 }
- 
+
 
 getMasternodePort() {
     declare -i port_num
@@ -92,7 +92,7 @@ deployMasternodes() {
     # Some additional directory structure and management will be needed here
     # The RPC port will also need to be unique for each daemon
 
-    git clone https://github.com/coolblock/vpsVivo.git
+    git clone https://github.com/rareko/vpsVivo.git
     cd vpsVivo
     ((mncount--))
     echo "masternodecount to deploy $mncount" > ~/masternodecount.txt
